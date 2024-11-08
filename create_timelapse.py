@@ -1,28 +1,38 @@
 import os
+import subprocess
+import re
 
-import cv2
-
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower()
+            for text in re.split('([0-9]+)', s)]
 
 def create_timelapse_video(image_folder, output_video):
+    # Get all jpg files and sort them naturally
     images = [img for img in os.listdir(image_folder) if img.endswith(".jpg")]
-    images.sort()
+    images.sort(key=natural_sort_key)
 
-    # Get the dimensions of the first image
-    frame = cv2.imread(os.path.join(image_folder, images[0]))
-    height, width, layers = frame.shape
+    # Create a text file with the correct order of frames
+    with open('frames.txt', 'w') as f:
+        for img in images:
+            f.write(f"file '{os.path.join(image_folder, img)}'\n")
 
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    video = cv2.VideoWriter(output_video, fourcc, 30, (width, height))
+    # Use the text file as input for ffmpeg
+    subprocess.run([
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", "frames.txt",
+        "-framerate", "30",
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-preset", "ultrafast",
+        output_video
+    ])
 
-    for image in images:
-        video.write(cv2.imread(os.path.join(image_folder, image)))
-
-    cv2.destroyAllWindows()
-    video.release()
+    # Clean up the temporary file
+    os.remove('frames.txt')
 
     print(f"Timelapse video saved as {output_video}")
 
-
 if __name__ == "__main__":
-    create_timelapse_video("./timelapse_images_4k", "timelapsed_imgs.mp4")
+    create_timelapse_video("./timelapse_images", "timelapsed_imgs.mp4")

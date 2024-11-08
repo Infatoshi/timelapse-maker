@@ -3,30 +3,19 @@
 Python script to create timelapses from image sequences.
 
 ## Setup
-
-1. Clone repository
-2. Install dependencies (in virtual env):
-   ```
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/Infatoshi/timelapse-maker && cd timelapse-maker && chmod +x setup.sh && ./setup.sh
+```
 
 ## Usage
 
-- everything you'll need in inside `v1.py`
+- `python v1.py --hours 12 --interval 15` ( interval is in seconds )
+- `python create_timelapse.py` ( uses custom ffmpeg command to turn the individual frames into a video stream )
 
-## Requirements
-
-- Python 3.8+
-- OpenCV
-- NumPy
-
-See `requirements.txt` for versions.
+## To use `add_clock.py`
+- you'll have to install `opencv-python` which may throw errors on the raspberry pi. I exclude this from the setup script to ensure setup goes as expected.
 
 ## License
 
 MIT
 
-```
-
-Adjust as needed for your specific implementation.
-```

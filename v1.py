@@ -1,53 +1,40 @@
 import os
 import time
-
-import cv2
-
+import subprocess
+from datetime import datetime
 
 def capture_timelapse(duration, interval):
     # Create a directory to store the images
-    if not os.path.exists("timelapse_images_4k"):
-        os.makedirs("timelapse_images_4k")
-
-    # Initialize the camera
-    cap = cv2.VideoCapture(0)
-
-    # Set the resolution to 4K (3840x2160)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-
-    # Force MJPG format for better compatibility with high resolutions
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc("M", "J", "P", "G"))
-
-    # Verify the settings
-    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print(f"Camera resolution set to: {width}x{height}")
+    output_folder = "timelapse_images"
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
     # Calculate the number of frames to capture
     num_frames = int(duration / interval)
 
     for i in range(num_frames):
-        # Capture frame-by-frame
-        ret, frame = cap.read()
+        # Generate the filename with a timestamp
+        # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{output_folder}/frame_{i}.jpg"
 
-        if ret:
-            # Save the frame as an image
-            cv2.imwrite(f"timelapse_images_4k/frame_{i:04d}.jpg", frame)
-            print(f"Captured frame {i+1}/{num_frames}")
-        else:
-            print(f"Failed to capture frame {i+1}")
+        # Capture the image using fswebcam
+        subprocess.run(["fswebcam", "-r", "1920x1080", "--no-banner", filename])
+
+        print(f"Captured frame {i+1}/{num_frames}")
 
         # Wait for the specified interval
         time.sleep(interval)
 
-    # Release the camera
-    cap.release()
+    print("Timelapse capture completed.")
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Capture timelapse images.")
+    parser.add_argument("--hours", type=float, required=True, help="Duration of timelapse in hours")
+    parser.add_argument("--interval", type=int, required=True, help="Interval between frames in seconds")
+    
+    args = parser.parse_args()
+    
+    duration = 3600 * args.hours  # Total duration in seconds
+    interval = args.interval  # Interval between frames in seconds
 
-# Example usage
-hours = 15
-duration = 3600 * hours  # Total duration in seconds
-interval = 15  # Interval between frames in seconds
-
-capture_timelapse(duration, interval)
+    capture_timelapse(duration, interval)
