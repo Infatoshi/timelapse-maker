@@ -1,6 +1,10 @@
 # timelapse-maker
 
-Python script to create timelapses from image sequences.
+Python script to create camera timelapses on any unix-based device
+
+# Prereqs
+- Python 3.8 or higher
+- Using either macOS or Linux (this wasn't tested on windows)
 
 ## Setup
 ```bash
