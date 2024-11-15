@@ -1,6 +1,6 @@
 # timelapse-maker
 
-Python script to create camera timelapses on any unix-based device
+Python scripts to create camera timelapses on desktop PCs, raspberry pis, and macbooks.
 
 # Prereqs
 - Python 3.8 or higher
@@ -24,13 +24,13 @@ mkdir timelapse_images
 
 ### MacOS
 ```bash 
-brew install imagesnap
 git clone https://github.com/Infatoshi/timelapse-maker
 cd timelapse-maker
 python3 -m venv venv
 source venv/bin/activate
 pip install argparse opencv-python numpy
 mkdir timelapse_images
+#opt. brew install imagesnap timg
 
 ```
 
