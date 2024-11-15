@@ -30,6 +30,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install argparse opencv-python numpy
 mkdir timelapse_images
+brew install ffmpeg
 #opt. brew install imagesnap timg
 
 ```
