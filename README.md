@@ -34,10 +34,10 @@ mkdir timelapse_images
 
 ```
 
-### Windows (why do you make this so hard... uh whatever)
+### Windows
 - first download this github repository to a directory of your choice (or use git if you're like that)
-- open the command prompt with -> Windows key then "cmd" ()
-- 
+- open the command prompt with -> Windows key then "cmd"
+- `cd` into your project folder. Ex: `cd C:\User\Desktop\python-projs\timelapse-maker`
 ```bash
 python3 -m venv venv
 venv\Scripts\activate.bat
