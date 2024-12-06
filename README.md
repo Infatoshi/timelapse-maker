@@ -2,12 +2,11 @@
 
 Python scripts to create camera timelapses on desktop PCs, raspberry pis, and macbooks.
 
-# Prereqs
-- Python 3.8 or higher
-- Using either macOS or Linux (this wasn't tested on windows)
-- ensure git is installed with `git -V`
-- you'll have to modify the setup command if you're using a virtual env like conda or uv
-- homebrew if you're using a mac/macbook
+# Requirements
+- Python >= 3.8
+- Git
+- macOS or Linux (not tested on Windows)
+- Homebrew (for macOS users)
 
 ## Setup
 ### Cloning the Project
