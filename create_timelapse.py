@@ -1,6 +1,7 @@
 import os
 import subprocess
 import re
+import argparse
 
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower()
@@ -19,6 +20,7 @@ def create_timelapse_video(image_folder, output_video):
     # Use the text file as input for ffmpeg
     subprocess.run([
         "ffmpeg",
+        "-y",  # Overwrite output file if it exists
         "-f", "concat",
         "-safe", "0",
         "-i", "frames.txt",
@@ -35,4 +37,9 @@ def create_timelapse_video(image_folder, output_video):
     print(f"Timelapse video saved as {output_video}")
 
 if __name__ == "__main__":
-    create_timelapse_video("./timelapse_images", "timelapsed_imgs.mp4")
+    parser = argparse.ArgumentParser(description="Create a timelapse video from a folder of images.")
+    parser.add_argument("image_folder", help="Path to the folder containing images.")
+    parser.add_argument("output_video", help="Path to the output video file.")
+    args = parser.parse_args()
+
+    create_timelapse_video(args.image_folder, args.output_video)

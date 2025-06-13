@@ -48,7 +48,7 @@ def capture_timelapse_opencv(
                 print(f"Error capturing frame {i+1}")
                 continue
 
-            filename = output_dir / "frame_{i:04d}.jpg"
+            filename = output_dir / f"frame_{i:04d}.jpg"
 
             cv2.imwrite(filename, frame)
             print(f"Captured frame {i}/{num_frames}")

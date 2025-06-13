@@ -46,6 +46,11 @@ pip install opencv-python
 ## To use `add_clock.py`
 - you'll have to install `opencv-python` which may throw errors on the raspberry pi. I exclude this from the setup script to ensure setup goes as expected.
 
+## Running all the time in background via cronjob
+- setup as usual
+- `chmod +x run_timelapse.sh`
+- add `bash /home/pi/timelapse-maker/run_timelapse.sh` to top of `crontab -e` and set to to whatever you'd like... 7am each day (assuming 24 hr or less timelapses would be `0 7 * * * /home/pi/timelapse-maker/run_timelapse.sh`)
+
 ## License
 
 MIT
