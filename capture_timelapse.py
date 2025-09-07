@@ -1,57 +1,91 @@
-import argparse
 from dataclasses import dataclass
 from pathlib import Path
-import platform
+import argparse
 import time
-import subprocess
-
+import cv2
+from datetime import datetime
 
 @dataclass
 class Resolution:
     width: int
     height: int
 
+def add_timestamp(frame):
+    # Get current local time in military format (HH:MM)
+    now = datetime.now()
+    time_str = now.strftime("%H:%M")
 
-def capture_timelapse_opencv(
+    # Set font properties (medium-small, white)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 2.0
+    font_thickness = 2
+    color = (255, 255, 255)  # White
+
+    # Get text size
+    text_size = cv2.getTextSize(time_str, font, font_scale, font_thickness)[0]
+
+    # Position: top-left with padding
+    text_x = 20
+    text_y = text_size[1] + 20
+
+    # Put text on frame
+    cv2.putText(frame, time_str, (text_x, text_y), font, font_scale, color, font_thickness)
+
+    return frame
+
+def capture_timelapse(
     duration: float,
     interval: int,
     output_dir: Path,
-    device: int = 0,
+    use_timestamp: bool = True,
     resolution: Resolution = None,
 ):
-    import cv2
-
-    # Initialize camera
-    cap = cv2.VideoCapture(device)
-
-    if not cap.isOpened():
-        print(f"Error: Could not open camera {device}")
-        return
+    # Try different camera indices
+    camera = None
+    for i in range(10):
+        test_camera = cv2.VideoCapture(i)
+        if test_camera.isOpened():
+            # Test if we can actually read from it
+            ret, frame = test_camera.read()
+            if ret and frame is not None:
+                camera = test_camera
+                print(f"Found working camera at index {i}")
+                break
+            else:
+                test_camera.release()
+        else:
+            test_camera.release()
+    
+    if camera is None:
+        raise RuntimeError("No working camera found. Please connect a camera device or use a test mode.")
 
     # Set resolution if specified
     if resolution:
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution.width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution.height)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, resolution.width)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution.height)
 
-    # Get actual camera properties
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # Get actual resolution
+    width = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print(f"Camera resolution: {width}x{height}")
 
     num_frames = int(duration // interval)
 
     try:
         for i in range(1, num_frames + 1):
-            ret, frame = cap.read()
-
+            # Capture frame
+            ret, frame = camera.read()
             if not ret:
-                print(f"Error capturing frame {i+1}")
+                print(f"Failed to capture frame {i}")
                 continue
 
-            filename = output_dir / f"frame_{i:04d}.jpg"
+            # Add current timestamp to the frame if flag is True
+            if use_timestamp:
+                frame = add_timestamp(frame)
 
-            cv2.imwrite(filename, frame)
-            print(f"Captured frame {i}/{num_frames}")
+            filename = output_dir / f"frame_{i:04d}.jpg"
+            cv2.imwrite(str(filename), frame)
+            print(f"Captured frame {i}/{num_frames}{' with timestamp' if use_timestamp else ''}")
 
             if i < num_frames:
                 time.sleep(interval)
@@ -60,32 +94,8 @@ def capture_timelapse_opencv(
         print("\nCapture interrupted by user")
     finally:
         # Release the camera
-        cap.release()
+        camera.release()
         print("Timelapse capture completed.")
-
-
-def capture_timelapse_linux(
-    duration: float,
-    interval: int,
-    output_dir: Path,
-    resolution: Resolution = None,
-    device: int = 0,
-):
-    num_frames = int(duration // interval)
-
-    for i in range(1, num_frames + 1):
-        filename = f"{output_dir}/frame_{i:04d}.jpg"
-
-        # Capture the image using fswebcam
-        subprocess.run(["fswebcam", "-r", "1920x1080", "--no-banner", filename])
-
-        print(f"Captured frame {i}/{num_frames}")
-
-        if i < num_frames:
-            time.sleep(interval)
-
-    print("Timelapse capture completed.")
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -111,6 +121,12 @@ def main():
         default="timelapse_images",
         help="Where to save the frames",
     )
+    parser.add_argument(
+        "--add-timestamp",
+        action="store_true",
+        default=True,
+        help="Add military time timestamp to frames (default: True)",
+    )
     parser.add_argument("--width", type=int, help="Custom width for capture")
     parser.add_argument("--height", type=int, help="Custom height for capture")
 
@@ -122,18 +138,6 @@ def main():
     if args.width and args.height:
         resolution = Resolution(args.width, args.height)
 
-    mapping = {
-        "Linux": capture_timelapse_linux,
-        "Darwin": capture_timelapse_opencv,
-        "Windows": capture_timelapse_opencv,
-    }
-
-    os_type = platform.system()
-    try:
-        capture_timelapse = mapping[os_type]
-    except KeyboardInterrupt:
-        parser.error(f"Unsupported OS: {os_type}")
-
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
 
@@ -141,10 +145,10 @@ def main():
         duration=duration,
         interval=args.interval,
         output_dir=output_dir,
+        use_timestamp=args.add_timestamp,
         resolution=resolution,
-        device=0,
     )
-
 
 if __name__ == "__main__":
     main()
+

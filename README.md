@@ -1,4 +1,4 @@
-# timelapse-maker
+# timelapse-maker-v2
 
 Python scripts to create camera timelapses on desktop PCs, raspberry pis, and macbooks.
 
@@ -6,50 +6,84 @@ Python scripts to create camera timelapses on desktop PCs, raspberry pis, and ma
 - Python >= 3.8
 - Git
 - macOS or Linux (not tested on Windows)
-- Homebrew (for macOS users)
+- OpenCV for Python (`opencv-python`)
+- ffmpeg
 
 ## Setup
 ### Cloning the Project
 ```bash
 git clone https://github.com/Infatoshi/timelapse-maker
-cd timelapse-maker
+cd timelapse-maker-v2
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 ### Linux
 ```bash
-sudo apt install ffmpeg fswebcam
+sudo apt install ffmpeg
+pip install opencv-python
 ```
 
 ### MacOS
 ```bash 
-pip install opencv-python numpy
+pip install opencv-python
 brew install ffmpeg
-#opt. brew install imagesnap timg
 ```
 
 ### Windows
 - Open the command prompt with -> Windows key then "cmd"
-- `cd` into your project folder. Ex: `cd C:\User\Desktop\python-projs\timelapse-maker`
+- `cd` into your project folder. Ex: `cd C:\User\Desktop\python-projs\timelapse-maker-v2`
 ```bash
 .venv\Scripts\activate.bat
 pip install opencv-python
 ```
 
 ## Usage
-> I recommend trying out a frame or two to see if the position is what you want. If you have more than 1 camera available (even virtual cameras), run the script to see which frames pop into `timelapse_images`. If its the incorrect camera, try increasing `device=0` to `device=1` in the first function of the script (increase until you arrive at the correct camera)
 
-- `python capture_timelapse.y --hours 12 --interval 15` ( interval is in seconds, shorter interval with make the timelapse smoother )
-- `python create_timelapse.py` ( uses custom ffmpeg command to turn the individual frames into a video stream. only if you're on mac or linux though )
+### Option 1: Complete Workflow (Recommended)
+Use the shell script for automated capture and video creation:
+```bash
+./run_timelapse.sh [--hours <hours>] [--interval <seconds>] [--output-dir <dir>] [--width <w>] [--height <h>] [--no-timestamp]
+```
 
-## To use `add_clock.py`
-- you'll have to install `opencv-python` which may throw errors on the raspberry pi. I exclude this from the setup script to ensure setup goes as expected.
+Examples:
+```bash
+# 20-hour timelapse with 15-second intervals (defaults)
+./run_timelapse.sh
 
-## Running all the time in background via cronjob
-- setup as usual
-- `chmod +x run_timelapse.sh`
-- add `bash /home/pi/timelapse-maker/run_timelapse.sh` to top of `crontab -e` and set to to whatever you'd like... 7am each day (assuming 24 hr or less timelapses would be `0 7 * * * /home/pi/timelapse-maker/run_timelapse.sh`)
+# 12-hour timelapse with 30-second intervals
+./run_timelapse.sh --hours 12 --interval 30
+
+# Custom resolution without timestamp
+./run_timelapse.sh --hours 8 --interval 10 --width 1920 --height 1080 --no-timestamp
+```
+
+### Option 2: Manual Steps
+Run the Python scripts individually:
+
+#### Capture Images
+```bash
+python3 capture_timelapse.py --hours 12 --interval 15 --output-dir timelapse_imgs [--width <w>] [--height <h>] [--add-timestamp]
+```
+
+#### Create Video
+```bash
+python3 create_timelapse.py <image_folder> <output_video.mp4>
+```
+
+Example:
+```bash
+python3 capture_timelapse.py --hours 12 --interval 15 --output-dir timelapse_imgs --add-timestamp
+python3 create_timelapse.py timelapse_imgs videos/my_timelapse.mp4
+```
+
+## Features
+- **Automatic camera detection**: Scans for available cameras and uses the first working one
+- **Built-in timestamps**: Add military time (HH:MM) to each frame
+- **Custom resolution**: Set specific width and height for capture
+- **Flexible intervals**: Configure time between captures (seconds)
+- **Organized output**: Automatic directory structure for images and videos
+- **Error handling**: Graceful handling of camera issues and interruptions
 
 ## License
 
