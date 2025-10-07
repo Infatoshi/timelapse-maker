@@ -1,4 +1,4 @@
-# timelapse-maker-v2
+# timelapse-maker
 
 Python scripts to create camera timelapses on desktop PCs, raspberry pis, and macbooks.
 
