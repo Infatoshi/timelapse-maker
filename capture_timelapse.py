@@ -4,6 +4,7 @@ import argparse
 import time
 import cv2
 from datetime import datetime
+import re
 
 @dataclass
 class Resolution:
@@ -33,12 +34,29 @@ def add_timestamp(frame):
 
     return frame
 
+def find_last_frame_number(output_dir: Path) -> int:
+    """Find the highest frame number in the output directory."""
+    frame_files = list(output_dir.glob("frame_*.jpg"))
+    if not frame_files:
+        return 0
+    
+    max_frame = 0
+    for frame_file in frame_files:
+        # Extract frame number from filename (e.g., frame_0001.jpg -> 1)
+        match = re.search(r'frame_(\d+)\.jpg', frame_file.name)
+        if match:
+            frame_num = int(match.group(1))
+            max_frame = max(max_frame, frame_num)
+    
+    return max_frame
+
 def capture_timelapse(
     duration: float,
     interval: int,
     output_dir: Path,
     use_timestamp: bool = True,
     resolution: Resolution = None,
+    resume: bool = False,
 ):
     # Try different camera indices
     camera = None
@@ -70,9 +88,19 @@ def capture_timelapse(
     print(f"Camera resolution: {width}x{height}")
 
     num_frames = int(duration // interval)
+    
+    # Determine starting frame number
+    start_frame = 1
+    if resume:
+        last_frame = find_last_frame_number(output_dir)
+        if last_frame > 0:
+            start_frame = last_frame + 1
+            print(f"Resuming from frame {start_frame} (found {last_frame} existing frames)")
+        else:
+            print("Resume requested but no existing frames found. Starting from frame 1.")
 
     try:
-        for i in range(1, num_frames + 1):
+        for i in range(start_frame, start_frame + num_frames):
             # Capture frame
             ret, frame = camera.read()
             if not ret:
@@ -85,9 +113,10 @@ def capture_timelapse(
 
             filename = output_dir / f"frame_{i:04d}.jpg"
             cv2.imwrite(str(filename), frame)
-            print(f"Captured frame {i}/{num_frames}{' with timestamp' if use_timestamp else ''}")
+            total_frames = start_frame + num_frames - 1
+            print(f"Captured frame {i}/{total_frames}{' with timestamp' if use_timestamp else ''}")
 
-            if i < num_frames:
+            if i < start_frame + num_frames - 1:
                 time.sleep(interval)
 
     except KeyboardInterrupt:
@@ -129,6 +158,11 @@ def main():
     )
     parser.add_argument("--width", type=int, help="Custom width for capture")
     parser.add_argument("--height", type=int, help="Custom height for capture")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from the last captured frame instead of starting fresh",
+    )
 
     args = parser.parse_args()
 
@@ -147,6 +181,7 @@ def main():
         output_dir=output_dir,
         use_timestamp=args.add_timestamp,
         resolution=resolution,
+        resume=args.resume,
     )
 
 if __name__ == "__main__":

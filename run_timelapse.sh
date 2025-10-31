@@ -64,15 +64,19 @@ mkdir -p "$VIDEO_DIR"
 VIDEO_FILENAME=$(date +%Y_%b%d.mp4 | tr '[:upper:]' '[:lower:]')
 VIDEO_PATH="$VIDEO_DIR/$VIDEO_FILENAME"
 
-# It's good practice to clean the image directory before starting a new capture.
-# This removes any leftover images from a previous run.
-echo "Cleaning up old images from $OUTPUT_DIR? (y/n)"
-read -r confirm
-if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
-  rm -f "$OUTPUT_DIR"/*.jpg
-  echo "Cleanup complete."
-else
-  echo "Skipping cleanup."
+# Check if output directory has existing images
+RESUME=false
+if [ -n "$(find "$OUTPUT_DIR" -maxdepth 1 -name "*.jpg" -type f 2>/dev/null)" ]; then
+  echo "Found existing images in $OUTPUT_DIR"
+  echo "Do you want to remove them and start fresh? (y/n)"
+  read -r confirm
+  if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+    rm -f "$OUTPUT_DIR"/*.jpg
+    echo "Cleanup complete. Starting fresh capture."
+  else
+    echo "Continuing from last frame..."
+    RESUME=true
+  fi
 fi
 
 # Check if Python scripts exist
@@ -83,16 +87,20 @@ fi
 
 # Run the capture script with specified duration and interval.
 echo "Starting ${HOURS}-hour timelapse capture with ${INTERVAL}-second interval..."
+RESUME_FLAG=""
+if [ "$RESUME" = true ]; then
+  RESUME_FLAG="--resume"
+fi
 if [ "$ADD_TIMESTAMP" = true ]; then
-  python3 "$PROJECT_DIR/capture_timelapse.py" --hours "$HOURS" --interval "$INTERVAL" --output-dir "$OUTPUT_DIR" --add-timestamp ${WIDTH:+--width "$WIDTH"} ${HEIGHT:+--height "$HEIGHT"}
+  cd "$PROJECT_DIR" && uv run capture_timelapse.py --hours "$HOURS" --interval "$INTERVAL" --output-dir "$OUTPUT_DIR" --add-timestamp ${WIDTH:+--width "$WIDTH"} ${HEIGHT:+--height "$HEIGHT"} $RESUME_FLAG
 else
-  python3 "$PROJECT_DIR/capture_timelapse.py" --hours "$HOURS" --interval "$INTERVAL" --output-dir "$OUTPUT_DIR" ${WIDTH:+--width "$WIDTH"} ${HEIGHT:+--height "$HEIGHT"}
+  cd "$PROJECT_DIR" && uv run capture_timelapse.py --hours "$HOURS" --interval "$INTERVAL" --output-dir "$OUTPUT_DIR" ${WIDTH:+--width "$WIDTH"} ${HEIGHT:+--height "$HEIGHT"} $RESUME_FLAG
 fi
 echo "Timelapse capture finished."
 
 # After capture is complete, create the video.
 echo "Creating timelapse video: $VIDEO_PATH"
-python3 "$PROJECT_DIR/create_timelapse.py" "$OUTPUT_DIR" "$VIDEO_PATH"
+cd "$PROJECT_DIR" && uv run create_timelapse.py "$OUTPUT_DIR" "$VIDEO_PATH"
 
 echo "Timelapse process completed successfully. Video saved to $VIDEO_PATH"
 
