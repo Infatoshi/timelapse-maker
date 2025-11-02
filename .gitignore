@@ -1,4 +1,6 @@
+timelapse_imgs/*
 timelapse_images/*
+videos/*
 .DS_Store
 .env/
 

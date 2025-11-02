@@ -61,7 +61,7 @@ def capture_timelapse(
     # Try different camera indices
     camera = None
     for i in range(10):
-        test_camera = cv2.VideoCapture(i)
+        test_camera = cv2.VideoCapture(0)
         if test_camera.isOpened():
             # Test if we can actually read from it
             ret, frame = test_camera.read()

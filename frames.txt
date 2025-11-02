@@ -1,1 +1,0 @@
-file '/Users/infatoshi/py/timelapse-maker/timelapse_imgs/frame_0001.jpg'
